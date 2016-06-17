@@ -18,6 +18,10 @@ import bs4 as bs
 def get_dcsource(inputio):
     return get_update_data(inputio,getfilecount=False,getsoups=False)[0]
 
+def get_dcsource_iscompleted(inputio):
+    result = get_update_data(inputio,getfilecount=False,getsoups=False)
+    return (result[0],result[9])
+
 def get_dcsource_chaptercount(inputio):
     return get_update_data(inputio,getfilecount=True,getsoups=False)[:2] # (source,filecount)
 
@@ -38,6 +42,14 @@ def get_update_data(inputio,
         source=firstmetadom.getElementsByTagName("dc:source")[0].firstChild.data.encode("utf-8")
     except:
         source=None
+
+    # Look for 'Completed' in dc:subject tags.
+    is_completed = False
+    for subject in firstmetadom.getElementsByTagName("dc:subject"):
+        tag = subject.firstChild.data.encode("utf-8")
+        if tag == 'Completed':
+            is_completed = True
+            break
 
     ## Save the path to the .opf file--hrefs inside it are relative to it.
     relpath = get_path_part(rootfilename)
@@ -177,7 +189,8 @@ def get_update_data(inputio,
     #for k in images.keys():
         #print("\tlongdesc:%s\n\tData len:%s\n"%(k,len(images[k])))
     # print("datamaps:%s"%datamaps)
-    return (source,filecount,soups,images,oldcover,calibrebookmark,logfile,urlsoups,datamaps)
+    return (source,filecount,soups,images,oldcover,calibrebookmark,
+            logfile,urlsoups,datamaps,is_completed)
 
 def get_path_part(n):
     relpath = os.path.dirname(n)

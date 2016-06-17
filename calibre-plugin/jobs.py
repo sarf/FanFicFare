@@ -129,6 +129,9 @@ def do_download_for_worker(book,options,merge,notification=lambda x,y:x):
         
         try:
             book['comment'] = _('Download started...')
+
+            if 'completed_skip' in book and book['completed_skip']:
+                return book
             
             configuration = get_fff_config(book['url'],
                                             options['fileform'],

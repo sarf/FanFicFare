@@ -82,8 +82,8 @@ from calibre_plugins.fanficfare_plugin.fanficfare import (
     adapters, exceptions)
 
 from calibre_plugins.fanficfare_plugin.fanficfare.epubutils import (
-    get_dcsource, get_dcsource_chaptercount, get_story_url_from_html,
-    reset_orig_chapters_epub)
+    get_dcsource, get_dcsource_iscompleted, get_dcsource_chaptercount,
+    get_story_url_from_html, reset_orig_chapters_epub)
 
 from calibre_plugins.fanficfare_plugin.fanficfare.geturls import (
     get_urls_from_page, get_urls_from_html,get_urls_from_text,
@@ -771,11 +771,14 @@ class FanFicFarePlugin(InterfaceAction):
         filenames = self.get_epubmerge_plugin().do_unmerge(bookepubio,tdir)
         urlmapfile = {}
         url_list = []
+        completed_list = []
         for f in filenames:
-            url = get_dcsource(f)
+            (url,iscompleted) = get_dcsource_iscompleted(f)
             if url:
                 urlmapfile[url]=f
                 url_list.append(url)
+                if iscompleted:
+                    completed_list.append(url)
 
         if not filenames or len(filenames) != len (url_list):
             info_dialog(self.gui, _("Cannot Update Anthology"),
@@ -800,6 +803,10 @@ class FanFicFarePlugin(InterfaceAction):
         self.restore_cursor()
 
         #print("urlmapfile:%s"%urlmapfile)
+        print("completed_list:%s"%completed_list)
+
+        # remove_dir(tdir)
+        # return
 
         # AddNewDialog collects URLs, format and presents buttons.
         # add_new_dialog is modeless and reused, both for new stories
@@ -811,7 +818,8 @@ class FanFicFarePlugin(InterfaceAction):
                                         newmerge=False,
                                         extrapayload=urlmapfile,
                                         extraoptions={'tdir':tdir,
-                                                      'mergebook':mergebook})
+                                                      'mergebook':mergebook,
+                                                      'completed_list':completed_list})
         # Need to use AddNewDialog modal here because it's an update
         # of an existing book.  Don't want the user deleting it or
         # switching libraries on us.
@@ -1029,6 +1037,18 @@ class FanFicFarePlugin(InterfaceAction):
         logger.debug("url:%s"%url)
         mi = None
 
+        # if updating a merged book and it's complete, skip and reuse
+        if merge and url in options['completed_list']:
+            book['completed_skip'] = True
+            book['outfile'] = book['epub_for_update']
+            book['status'] = _('Reuse')
+            book['author'] = []
+            book['title'] = ''
+            book['comment'] = _('Reuse existing Completed book in anthology as is.')
+            book['tags'] = []
+            book['all_metadata'] = {}
+            return
+        
         ## Check reject list.  Redundant with below for when story URL
         ## changes, but also kept here to avoid network hit in most
         ## common case where given url is story url.
