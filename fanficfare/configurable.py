@@ -205,6 +205,7 @@ def get_valid_set_options():
                'always_login':(['archiveofourown.org'],None,boollist),
                'use_archived_author':(['archiveofourown.org'],None,boollist),
                'use_view_full_work':(['archiveofourown.org'],None,boollist),
+               'use_creators_style':(['archiveofourown.org'],None,boollist),
 
                'force_login':(['phoenixsong.net'],None,boollist),
                'non_breaking_spaces':(['fictionmania.tv'],None,boollist),
@@ -336,6 +337,7 @@ def get_valid_keywords():
                  'use_view_full_work',
                  'always_login',
                  'exclude_notes',
+                 'use_creators_style',
                  'exclude_editor_signature',
                  'extra_logpage_entries',
                  'extra_subject_tags',

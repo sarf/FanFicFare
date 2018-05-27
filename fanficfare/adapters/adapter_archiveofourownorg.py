@@ -382,7 +382,7 @@ class ArchiveOfOurOwnOrgAdapter(BaseSiteAdapter):
         ## lost.
         logger.debug('Getting chapter text for: %s index: %s' % (url,index))
 
-        save_chapter_soup = self.make_soup('<div class="story"></div>')
+        save_chapter_soup = self.make_soup('<div id="workskin" class="story"></div>')
         ## use the div because the full soup will also have <html><body>.
         ## need save_chapter_soup for .new_tag()
         save_chapter=save_chapter_soup.find('div')
@@ -412,6 +412,17 @@ class ArchiveOfOurOwnOrgAdapter(BaseSiteAdapter):
             new_tag = save_chapter_soup.new_tag(tag)
             new_tag.string=string
             elem.append(new_tag)
+            return new_tag
+
+        # put the style in first, if using.
+        if self.getConfig("use_creators_style", False):
+            style = whole_dl_soup.find("style", {"type" : "text/css"})
+            if style:
+                # save_chapter.append(style) append isn"t good enough
+                # because it also moves the tag out of whole_dl_soup
+                # and we need a copy in each chapter.
+                new_style = append_tag(save_chapter,"style",style.string)
+                new_style["type"]="text/css"
 
         ## These are the over-all work's 'Notes at the beginning'.
         ## They only appear on the first chapter in individual chapter
