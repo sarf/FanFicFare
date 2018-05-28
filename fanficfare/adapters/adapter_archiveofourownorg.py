@@ -357,6 +357,20 @@ class ArchiveOfOurOwnOrgAdapter(BaseSiteAdapter):
                     self.setSeries(series_name, series_index)
                     self.story.setMetadata('seriesUrl',series_url)
 
+        # put the style
+        if self.getConfig("use_creators_style", False):
+            logger.debug("use_creators_style:true")
+            style = metasoup.find("style", {"type" : "text/css"})
+            if style:
+                logger.debug("found style:true")
+                logger.debug("style:"+style.string)
+                section = self.story.getMetadata('storyUrl')
+                try:
+                    self.configuration.add_section(section)
+                except: # ConfigParser.DuplicateSectionError:
+                    pass
+                self.configuration.set(section,'add_to_output_css',"\n"+style.string.replace('%','%%')) # for .ini interpolation of %
+
     def hookForUpdates(self,chaptercount):
         if self.oldchapters and len(self.oldchapters) > self.newestChapterNum:
             logger.info("Existing epub has %s chapters\nNewest chapter is %s.  Discarding old chapters from there on."%(len(self.oldchapters), self.newestChapterNum+1))
@@ -412,17 +426,6 @@ class ArchiveOfOurOwnOrgAdapter(BaseSiteAdapter):
             new_tag = save_chapter_soup.new_tag(tag)
             new_tag.string=string
             elem.append(new_tag)
-            return new_tag
-
-        # put the style in first, if using.
-        if self.getConfig("use_creators_style", False):
-            style = whole_dl_soup.find("style", {"type" : "text/css"})
-            if style:
-                # save_chapter.append(style) append isn"t good enough
-                # because it also moves the tag out of whole_dl_soup
-                # and we need a copy in each chapter.
-                new_style = append_tag(save_chapter,"style",style.string)
-                new_style["type"]="text/css"
 
         ## These are the over-all work's 'Notes at the beginning'.
         ## They only appear on the first chapter in individual chapter

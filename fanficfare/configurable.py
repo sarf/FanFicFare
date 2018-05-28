@@ -482,10 +482,11 @@ def make_generate_cover_settings(param):
 
 class Configuration(ConfigParser.SafeConfigParser):
 
-    def __init__(self, sections, fileform, lightweight=False):
+    def __init__(self, sections, fileform=None, lightweight=False):
         site = sections[-1] # first section is site DN.
         ConfigParser.SafeConfigParser.__init__(self)
 
+        self.fileform = fileform
         self.lightweight = lightweight
         self.use_pagecache = False # default to false for old adapters.
 
@@ -549,9 +550,15 @@ class Configuration(ConfigParser.SafeConfigParser):
         if not self.lightweight: # don't need when just checking for normalized URL.
             # replace if already set once.
             if self.url_config_set:
-                self.sectionslist[self.sectionslist.index('overrides')+1]=url
+                if self.fileform: # also [url:format]
+                    self.sectionslist[self.sectionslist.index('overrides')+2]=url
+                    self.sectionslist[self.sectionslist.index('overrides')+1]=url+":"+self.fileform
+                else:
+                    self.sectionslist[self.sectionslist.index('overrides')+1]=url
             else:
                 self.addConfigSection(url,'overrides')
+                if self.fileform: # also [url:format]
+                    self.addConfigSection(url+":"+self.fileform,'overrides')
                 self.url_config_set=True
 
     def addConfigSection(self,section,before=None):
